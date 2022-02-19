@@ -1,10 +1,11 @@
 require('dotenv').config()
 
-const { leerInput, inquirerMenu, pausa } = require('./helpers/inquirer');
+const { leerInput, inquirerMenu, pausa, listarLugares } = require('./helpers/inquirer');
 const Busquedas = require('./models/busquedas');
 
 const main = async() => {
     const busquedas = new Busquedas();
+
     let opt;
 
     do {
@@ -13,26 +14,41 @@ const main = async() => {
         switch (opt) {
             case 1:
                 // Mostrar mensaje
-                const lugar = await leerInput('Ciudad: ');
-                await busquedas.ciudad(lugar);
+                const termino = await leerInput('Ciudad: ');
+                
                 // Buscar los lugares
-
+                const lugares = await busquedas.ciudad(termino);
+                
                 //Seleccionar el lugar
+                const id = await listarLugares(lugares);
+                if(id === '0') continue;
+
+                const lugarSel = lugares.find( l => l.id === id );
+                // Guardar en json
+                busquedas.agregarHistorial(lugarSel.nombre);
 
                 // Datos de clima
+                const clima = await busquedas.clima(lugarSel.lat, lugarSel.lng);
+                // console.log({clima});
 
                 // Mostrar resultados
+                console.clear();
                 console.log('\nInformación del lugar\n'.green);
-                console.log('Ciudad: ');
-                console.log('Lat: ');
-                console.log('Lng: ');
-                console.log('Temperatura: ');
-                console.log('Mínima: ');
-                console.log('Máxima: ');
+                console.log('Ciudad: ', lugarSel.nombre.blue);
+                console.log('Lat: ', lugarSel.lat);
+                console.log('Lng: ', lugarSel.lng);
+                console.log('Temperatura: ', clima.temp);
+                console.log('Mínima: ', clima.min);
+                console.log('Máxima: ', clima.max);
+                console.log('Como esta el clima: ', clima.desc.blue);
 
                 break;
         
-            default:
+            case 2:
+                busquedas.historialCapitalizado.forEach((lugar, index) => {
+                    const idx = `${ index+1 }.`.green;
+                    console.log(`${idx} ${ lugar }`);
+                });
                 break;
         }
 
